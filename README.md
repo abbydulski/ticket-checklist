@@ -103,7 +103,15 @@ A team organizational tool for managing ticket completion checklists with Slack 
 
 Vercel automatically connects to your GitHub repository. Any push to your main branch will trigger a new deployment.
 
-## Customizing the Checklist
+## Customizing the App
+
+### Adding Your Company Logo
+
+1. Replace `public/logo.svg` with your company logo (PNG or SVG format recommended)
+2. If using a different filename, update the `src` in `app/page.tsx` (line ~104)
+3. See `public/LOGO_INSTRUCTIONS.md` for detailed instructions
+
+### Customizing the Checklist Steps
 
 Edit the `CHECKLIST_STEPS` array in `app/page.tsx` to customize your checklist items:
 
@@ -126,6 +134,8 @@ ticket-checklist/
 │   ├── layout.tsx             # Root layout
 │   └── page.tsx               # Main app component
 ├── public/                    # Static assets
+│   ├── logo.svg               # Company logo (replace with yours)
+│   └── LOGO_INSTRUCTIONS.md   # Logo setup guide
 ├── .env.local.example         # Environment variables template
 ├── next.config.js             # Next.js configuration
 ├── package.json               # Dependencies

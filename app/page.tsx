@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle2, Circle, Send, ArrowRight, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 // Define your checklist steps here
 const CHECKLIST_STEPS = [
@@ -19,6 +20,7 @@ export default function Home() {
   const [ticketName, setTicketName] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [currentStepChecked, setCurrentStepChecked] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -29,21 +31,29 @@ export default function Home() {
     }
   };
 
-  const handleStepComplete = () => {
-    const newCompleted = new Set(completedSteps);
-    newCompleted.add(CHECKLIST_STEPS[currentStep].id);
-    setCompletedSteps(newCompleted);
+  const handleCheckboxChange = () => {
+    setCurrentStepChecked(!currentStepChecked);
+  };
 
-    if (currentStep < CHECKLIST_STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      setIsComplete(true);
+  const handleNext = () => {
+    if (currentStepChecked) {
+      const newCompleted = new Set(completedSteps);
+      newCompleted.add(CHECKLIST_STEPS[currentStep].id);
+      setCompletedSteps(newCompleted);
+      setCurrentStepChecked(false);
+
+      if (currentStep < CHECKLIST_STEPS.length - 1) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        setIsComplete(true);
+      }
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      setCurrentStepChecked(false);
     }
   };
 
@@ -86,24 +96,35 @@ export default function Home() {
   // Initial screen - Enter ticket name
   if (!isStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Ticket Checklist</h1>
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/logo.svg"
+              alt="Company Logo"
+              width={240}
+              height={80}
+              className="object-contain"
+            />
+          </div>
+
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Ticket Checklist</h1>
           <p className="text-gray-600 mb-6">Enter your ticket name to begin</p>
-          
+
           <input
             type="text"
             value={ticketName}
             onChange={(e) => setTicketName(e.target.value)}
             placeholder="e.g., PROJ-123 - User Authentication"
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-6"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 mb-6"
             onKeyPress={(e) => e.key === 'Enter' && handleStart()}
           />
-          
+
           <button
             onClick={handleStart}
             disabled={!ticketName.trim()}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             Start Checklist
             <ArrowRight size={20} />
@@ -116,31 +137,32 @@ export default function Home() {
   // Completion screen
   if (isComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 size={48} className="text-white" />
           </div>
-          
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">All Done!</h2>
+
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">All Done!</h2>
           <p className="text-gray-600 mb-6">
             You've completed all checklist items for <strong>{ticketName}</strong>
           </p>
-          
+
           <button
             onClick={handleSendToSlack}
             disabled={isSending}
-            className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-2 mb-3"
+            className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-black disabled:bg-gray-300 transition-colors flex items-center justify-center gap-2 mb-3"
           >
             <Send size={20} />
             {isSending ? 'Sending...' : 'Send Report to Slack'}
           </button>
-          
+
           <button
             onClick={() => {
               setTicketName('');
               setCurrentStep(0);
               setCompletedSteps(new Set());
+              setCurrentStepChecked(false);
               setIsStarted(false);
               setIsComplete(false);
             }}
@@ -158,20 +180,20 @@ export default function Home() {
   const isCurrentStepComplete = completedSteps.has(currentStepData.id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 p-4">
       <div className="max-w-2xl mx-auto py-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">{ticketName}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{ticketName}</h1>
           <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
             <span>Step {currentStep + 1} of {CHECKLIST_STEPS.length}</span>
             <span>{completedSteps.size} completed</span>
           </div>
-          
+
           {/* Progress bar */}
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div
-              className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+              className="bg-gray-900 h-3 rounded-full transition-all duration-500"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -185,12 +207,27 @@ export default function Home() {
             ) : (
               <Circle size={32} className="text-gray-300 flex-shrink-0" />
             )}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 {currentStepData.title}
               </h2>
               <p className="text-gray-600">{currentStepData.description}</p>
             </div>
+          </div>
+
+          {/* Checkbox to confirm completion */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={currentStepChecked}
+                onChange={handleCheckboxChange}
+                className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900 cursor-pointer"
+              />
+              <span className="text-gray-700 font-medium">
+                I confirm this step is complete
+              </span>
+            </label>
           </div>
 
           <div className="flex gap-3">
@@ -203,10 +240,11 @@ export default function Home() {
                 Previous
               </button>
             )}
-            
+
             <button
-              onClick={handleStepComplete}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              onClick={handleNext}
+              disabled={!currentStepChecked}
+              className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {currentStep === CHECKLIST_STEPS.length - 1 ? 'Complete' : 'Next'}
               {currentStep < CHECKLIST_STEPS.length - 1 && <ArrowRight size={20} />}
@@ -216,13 +254,13 @@ export default function Home() {
 
         {/* Steps Overview */}
         <div className="bg-white rounded-2xl shadow-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">All Steps</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">All Steps</h3>
           <div className="space-y-3">
             {CHECKLIST_STEPS.map((step, index) => (
               <div
                 key={step.id}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                  index === currentStep ? 'bg-blue-50 border-2 border-blue-200' : ''
+                  index === currentStep ? 'bg-gray-100 border-2 border-gray-900' : ''
                 } ${completedSteps.has(step.id) ? 'opacity-60' : ''}`}
               >
                 {completedSteps.has(step.id) ? (

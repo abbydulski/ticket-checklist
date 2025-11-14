@@ -14,13 +14,13 @@ export async function POST(request: Request) {
     }
 
     const message = {
-      text: `✅ *Ticket Checklist Completed*`,
+      text: ` *Ticket Checklist Completed*`,
       blocks: [
         {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: '✅ Ticket Checklist Completed',
+            text: 'Ticket Checklist Completed',
             emoji: true,
           },
         },
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
           elements: [
             {
               type: 'mrkdwn',
-              text: '📋 Sent from Ticket Checklist App',
+              text: 'Sent from Ticket Checklist App',
             },
           ],
         },
