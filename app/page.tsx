@@ -96,7 +96,7 @@ export default function Home() {
   // Initial screen - Enter ticket name
   if (!isStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#D3D3D3' }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
           {/* Logo */}
           <div className="flex justify-center mb-6">
@@ -137,7 +137,7 @@ export default function Home() {
   // Completion screen
   if (isComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#D3D3D3' }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 size={48} className="text-white" />
@@ -180,7 +180,7 @@ export default function Home() {
   const isCurrentStepComplete = completedSteps.has(currentStepData.id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-700 p-4">
+    <div className="min-h-screen p-4" style={{ backgroundColor: '#D3D3D3' }}>
       <div className="max-w-2xl mx-auto py-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
