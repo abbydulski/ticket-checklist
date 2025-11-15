@@ -184,6 +184,17 @@ export default function Home() {
       <div className="max-w-2xl mx-auto py-8">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          {/* Logo */}
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/logo.svg"
+              alt="Company Logo"
+              width={180}
+              height={60}
+              className="object-contain"
+            />
+          </div>
+
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{ticketName}</h1>
           <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
             <span>Step {currentStep + 1} of {CHECKLIST_STEPS.length}</span>
