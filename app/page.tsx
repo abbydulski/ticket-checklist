@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, Send, ArrowRight, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
+import { createTicket, updateStepCompletion } from '@/lib/ticketService';
 
 // Define your checklist steps here
 const CHECKLIST_STEPS = [
@@ -24,10 +25,24 @@ export default function Home() {
   const [isStarted, setIsStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [ticketId, setTicketId] = useState<string | null>(null);
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (ticketName.trim()) {
-      setIsStarted(true);
+      setIsCreatingTicket(true);
+
+      // Create ticket in Supabase
+      const result = await createTicket(ticketName, CHECKLIST_STEPS);
+
+      if (result.success && result.ticketId) {
+        setTicketId(result.ticketId);
+        setIsStarted(true);
+      } else {
+        alert('Failed to create ticket. Please try again.');
+      }
+
+      setIsCreatingTicket(false);
     }
   };
 
@@ -35,10 +50,16 @@ export default function Home() {
     setCurrentStepChecked(!currentStepChecked);
   };
 
-  const handleNext = () => {
-    if (currentStepChecked) {
+  const handleNext = async () => {
+    if (currentStepChecked && ticketId) {
+      const stepId = CHECKLIST_STEPS[currentStep].id;
+
+      // Update step completion in Supabase
+      await updateStepCompletion(ticketId, stepId, true);
+
+      // Update local state
       const newCompleted = new Set(completedSteps);
-      newCompleted.add(CHECKLIST_STEPS[currentStep].id);
+      newCompleted.add(stepId);
       setCompletedSteps(newCompleted);
       setCurrentStepChecked(false);
 
@@ -118,16 +139,16 @@ export default function Home() {
             onChange={(e) => setTicketName(e.target.value)}
             placeholder="e.g., PROJ-123 - User Authentication"
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 mb-6"
-            onKeyPress={(e) => e.key === 'Enter' && handleStart()}
+            onKeyDown={(e) => e.key === 'Enter' && !isCreatingTicket && handleStart()}
           />
 
           <button
             onClick={handleStart}
-            disabled={!ticketName.trim()}
+            disabled={!ticketName.trim() || isCreatingTicket}
             className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
-            Start Checklist
-            <ArrowRight size={20} />
+            {isCreatingTicket ? 'Creating Ticket...' : 'Start Checklist'}
+            {!isCreatingTicket && <ArrowRight size={20} />}
           </button>
         </div>
       </div>
@@ -165,6 +186,7 @@ export default function Home() {
               setCurrentStepChecked(false);
               setIsStarted(false);
               setIsComplete(false);
+              setTicketId(null);
             }}
             className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
           >
