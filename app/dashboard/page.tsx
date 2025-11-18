@@ -141,9 +141,9 @@ export default function DashboardPage() {
             tickets.map((ticket) => {
               // Calculate section progress
               const sections = [
-                { name: 'Job Prep', start: 1, end: 5, color: 'bg-blue-600' },
-                { name: 'Field Ops', start: 6, end: 15, color: 'bg-green-600' },
-                { name: 'Office', start: 16, end: 20, color: 'bg-purple-600' },
+                { name: 'Job Prep', start: 1, end: 5 },
+                { name: 'Field Ops', start: 6, end: 15 },
+                { name: 'Office', start: 16, end: 20 },
               ];
 
               const getSectionProgress = (start: number, end: number) => {
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
-                                className={`${section.color} h-2 rounded-full transition-all duration-300`}
+                                className="bg-gray-900 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${sectionProgress}%` }}
                               />
                             </div>
