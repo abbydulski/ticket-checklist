@@ -15,6 +15,8 @@ export interface Ticket {
   is_complete: boolean;
   total_steps: number;
   completed_steps: number;
+  user_id: string | null;
+  created_by_email: string | null;
 }
 
 export interface TicketStep {

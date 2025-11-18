@@ -7,7 +7,12 @@ export interface ChecklistStep {
 }
 
 // Create a new ticket
-export async function createTicket(ticketName: string, steps: ChecklistStep[]) {
+export async function createTicket(
+  ticketName: string,
+  steps: ChecklistStep[],
+  userId?: string,
+  userEmail?: string
+) {
   try {
     console.log('Creating ticket:', ticketName);
 
@@ -19,6 +24,8 @@ export async function createTicket(ticketName: string, steps: ChecklistStep[]) {
         total_steps: steps.length,
         completed_steps: 0,
         is_complete: false,
+        user_id: userId,
+        created_by_email: userEmail,
       })
       .select()
       .single();
@@ -165,6 +172,24 @@ export async function getAllTickets() {
     return { success: true, tickets: data };
   } catch (error) {
     console.error('Error getting tickets:', error);
+    return { success: false, error };
+  }
+}
+
+// Get incomplete tickets for current user
+export async function getIncompleteTickets() {
+  try {
+    const { data, error } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('is_complete', false)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return { success: true, tickets: data };
+  } catch (error) {
+    console.error('Error getting incomplete tickets:', error);
     return { success: false, error };
   }
 }
