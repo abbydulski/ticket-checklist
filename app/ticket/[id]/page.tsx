@@ -153,23 +153,23 @@ export default function TicketDetailPage() {
   const currentSection = getCurrentSection();
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#D3D3D3' }}>
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-4" style={{ backgroundColor: '#D3D3D3' }}>
+      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 w-full max-w-3xl">
         {/* Header with Logo */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4 sm:mb-6">
           <Image
             src="/logo.svg"
             alt="Company Logo"
-            width={180}
-            height={60}
-            className="object-contain"
+            width={140}
+            height={47}
+            className="object-contain w-28 sm:w-36"
           />
         </div>
 
         {/* Ticket Info */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{ticket.ticket_name}</h1>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">{ticket.ticket_name}</h1>
+          <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
             <span>Step {currentStep + 1} of {steps.length}</span>
             <span>•</span>
             <span>{completedCount} completed</span>
@@ -177,7 +177,7 @@ export default function TicketDetailPage() {
         </div>
 
         {/* Section Progress Cards */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
           {sections.map((section) => {
             const { completed, total } = getSectionProgress(section.start, section.end);
             const sectionProgress = (completed / total) * 100;
@@ -186,21 +186,21 @@ export default function TicketDetailPage() {
             return (
               <div
                 key={section.name}
-                className={`p-4 rounded-lg border-2 transition-all ${
+                className={`p-2 sm:p-3 md:p-4 rounded-lg border-2 transition-all ${
                   isCurrentSection
                     ? 'border-gray-900 bg-gray-50'
                     : 'border-gray-200 bg-white'
                 }`}
               >
-                <div className="text-xs font-semibold text-gray-500 mb-1">
+                <div className="text-[10px] sm:text-xs font-semibold text-gray-500 mb-1 truncate">
                   {section.name}
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
                   {completed}/{total}
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                   <div
-                    className="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                    className="bg-gray-900 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                     style={{ width: `${sectionProgress}%` }}
                   />
                 </div>
@@ -210,35 +210,35 @@ export default function TicketDetailPage() {
         </div>
 
         {/* Current Section Banner */}
-        <div className="mb-6 p-4 bg-gray-900 text-white rounded-lg">
-          <div className="text-sm font-semibold mb-1">Current Section</div>
-          <div className="text-2xl font-bold">{currentSection}</div>
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-900 text-white rounded-lg">
+          <div className="text-xs sm:text-sm font-semibold mb-1">Current Section</div>
+          <div className="text-lg sm:text-xl md:text-2xl font-bold">{currentSection}</div>
         </div>
 
         {/* Current Step */}
-        <div className="mb-6 p-6 bg-gray-50 rounded-lg border-2 border-gray-200">
-          <div className="text-sm font-semibold text-gray-500 mb-2">
+        <div className="mb-4 sm:mb-6 p-4 sm:p-6 bg-gray-50 rounded-lg border-2 border-gray-200">
+          <div className="text-xs sm:text-sm font-semibold text-gray-500 mb-2">
             Step {steps[currentStep].step_id} of {steps.length}
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
             {steps[currentStep].step_title}
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg">
             {steps[currentStep].step_description}
           </p>
         </div>
 
         {/* Checkbox Confirmation */}
         {!steps[currentStep].is_completed && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-            <label className="flex items-center gap-3 cursor-pointer">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <label className="flex items-center gap-2 sm:gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={currentStepChecked}
                 onChange={handleCheckboxChange}
-                className="w-5 h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900 cursor-pointer"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-gray-900 border-gray-300 rounded focus:ring-gray-900 cursor-pointer flex-shrink-0"
               />
-              <span className="text-gray-700 font-medium">
+              <span className="text-gray-700 font-medium text-sm sm:text-base">
                 I confirm this step is complete
               </span>
             </label>
@@ -246,23 +246,23 @@ export default function TicketDetailPage() {
         )}
 
         {/* Navigation Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             onClick={() => router.push('/dashboard')}
-            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center gap-2"
+            className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
           >
-            <ArrowLeft size={20} />
-            Back to Dashboard
+            <ArrowLeft size={18} className="sm:w-5 sm:h-5" />
+            <span>Back to Dashboard</span>
           </button>
 
           {!steps[currentStep].is_completed && (
             <button
               onClick={handleNext}
               disabled={!currentStepChecked}
-              className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="flex-1 bg-gray-900 text-white py-2.5 sm:py-3 rounded-lg font-semibold hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              {currentStep === steps.length - 1 ? 'Complete Ticket' : 'Next Step'}
-              <ArrowRight size={20} />
+              <span>{currentStep === steps.length - 1 ? 'Complete Ticket' : 'Next Step'}</span>
+              <ArrowRight size={18} className="sm:w-5 sm:h-5" />
             </button>
           )}
         </div>

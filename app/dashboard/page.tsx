@@ -88,30 +88,30 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen p-6" style={{ backgroundColor: '#D3D3D3' }}>
+    <div className="min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#D3D3D3' }}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Image 
-                src="/logo.svg" 
-                alt="Company Logo" 
-                width={150} 
-                height={50}
-                className="object-contain"
+        <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <Image
+                src="/logo.svg"
+                alt="Company Logo"
+                width={120}
+                height={40}
+                className="object-contain w-24 sm:w-32"
               />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Ticket Dashboard</h1>
-                <p className="text-gray-600 text-sm">{user.email}</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Ticket Dashboard</h1>
+                <p className="text-gray-600 text-xs sm:text-sm truncate max-w-[200px] sm:max-w-none">{user.email}</p>
               </div>
             </div>
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors text-sm sm:text-base"
             >
-              <LogOut size={20} />
-              Sign Out
+              <LogOut size={18} />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -162,45 +162,45 @@ export default function DashboardPage() {
                     onClick={() => router.push(`/ticket/${ticket.id}`)}
                     className="cursor-pointer"
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex-1 pr-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{ticket.ticket_name}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+                      <div className="flex-1">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{ticket.ticket_name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                           <span>Progress: {ticket.completed_steps}/{ticket.total_steps}</span>
-                          <span>•</span>
+                          <span className="hidden sm:inline">•</span>
                           <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
                           {ticket.created_by_email && (
                             <>
-                              <span>•</span>
-                              <span>By: {ticket.created_by_email}</span>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="truncate max-w-[150px] sm:max-w-none">By: {ticket.created_by_email}</span>
                             </>
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-left sm:text-right">
+                        <div className="text-xl sm:text-2xl font-bold text-gray-900">
                           {Math.round((ticket.completed_steps / ticket.total_steps) * 100)}%
                         </div>
                       </div>
                     </div>
 
                     {/* Section Progress Bars */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       {sections.map((section) => {
                         const { completed, total } = getSectionProgress(section.start, section.end);
                         const sectionProgress = (completed / total) * 100;
 
                         return (
                           <div key={section.name} className="text-center">
-                            <div className="text-xs font-semibold text-gray-500 mb-1">
+                            <div className="text-[10px] sm:text-xs font-semibold text-gray-500 mb-1 truncate">
                               {section.name}
                             </div>
-                            <div className="text-sm font-bold text-gray-900 mb-1">
+                            <div className="text-xs sm:text-sm font-bold text-gray-900 mb-1">
                               {completed}/{total}
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                               <div
-                                className="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                                className="bg-gray-900 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${sectionProgress}%` }}
                               />
                             </div>
@@ -228,30 +228,30 @@ export default function DashboardPage() {
       {/* New Ticket Modal */}
       {showNewTicketModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Create New Ticket</h2>
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create New Ticket</h2>
             <input
               type="text"
               value={newTicketName}
               onChange={(e) => setNewTicketName(e.target.value)}
               placeholder="e.g., PROJ-123 - User Authentication"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 mb-4"
+              className="w-full px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 mb-4 text-sm sm:text-base"
               onKeyDown={(e) => e.key === 'Enter' && !creating && handleCreateTicket()}
             />
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <button
                 onClick={() => {
                   setShowNewTicketModal(false);
                   setNewTicketName('');
                 }}
-                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateTicket}
                 disabled={!newTicketName.trim() || creating}
-                className="flex-1 px-4 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
                 {creating ? 'Creating...' : 'Create'}
               </button>
