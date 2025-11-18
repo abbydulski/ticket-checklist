@@ -127,18 +127,40 @@ export default function TicketDetailPage() {
     );
   }
 
+  // Calculate section progress
+  const sections = [
+    { name: 'Job Prep', start: 1, end: 5 },
+    { name: 'Field Operations', start: 6, end: 15 },
+    { name: 'Office Work', start: 16, end: 20 },
+  ];
+
+  const getSectionProgress = (start: number, end: number) => {
+    const sectionSteps = steps.filter(s => s.step_id >= start && s.step_id <= end);
+    const completed = sectionSteps.filter(s => s.is_completed).length;
+    return { completed, total: sectionSteps.length };
+  };
+
+  const getCurrentSection = () => {
+    const stepId = steps[currentStep].step_id;
+    if (stepId >= 1 && stepId <= 5) return 'Job Prep';
+    if (stepId >= 6 && stepId <= 15) return 'Field Operations';
+    if (stepId >= 16 && stepId <= 20) return 'Office Work';
+    return '';
+  };
+
   const completedCount = steps.filter(s => s.is_completed).length;
   const progress = (completedCount / steps.length) * 100;
+  const currentSection = getCurrentSection();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#D3D3D3' }}>
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl">
         {/* Header with Logo */}
-        <div className="flex justify-center mb-4">
-          <Image 
-            src="/logo.svg" 
-            alt="Company Logo" 
-            width={180} 
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/logo.svg"
+            alt="Company Logo"
+            width={180}
             height={60}
             className="object-contain"
           />
@@ -154,22 +176,54 @@ export default function TicketDetailPage() {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div 
-              className="bg-gray-900 h-3 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+        {/* Section Progress Cards */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {sections.map((section) => {
+            const { completed, total } = getSectionProgress(section.start, section.end);
+            const sectionProgress = (completed / total) * 100;
+            const isCurrentSection = section.name === currentSection;
+
+            return (
+              <div
+                key={section.name}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  isCurrentSection
+                    ? 'border-gray-900 bg-gray-50'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="text-xs font-semibold text-gray-500 mb-1">
+                  {section.name}
+                </div>
+                <div className="text-2xl font-bold text-gray-900 mb-2">
+                  {completed}/{total}
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-gray-900 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${sectionProgress}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Current Section Banner */}
+        <div className="mb-6 p-4 bg-gray-900 text-white rounded-lg">
+          <div className="text-sm font-semibold mb-1">Current Section</div>
+          <div className="text-2xl font-bold">{currentSection}</div>
         </div>
 
         {/* Current Step */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <div className="mb-6 p-6 bg-gray-50 rounded-lg border-2 border-gray-200">
+          <div className="text-sm font-semibold text-gray-500 mb-2">
+            Step {steps[currentStep].step_id} of {steps.length}
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
             {steps[currentStep].step_title}
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-lg">
             {steps[currentStep].step_description}
           </p>
         </div>
