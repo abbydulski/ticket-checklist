@@ -169,6 +169,12 @@ export default function DashboardPage() {
                           <span>Progress: {ticket.completed_steps}/{ticket.total_steps}</span>
                           <span>•</span>
                           <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
+                          {ticket.created_by_email && (
+                            <>
+                              <span>•</span>
+                              <span>By: {ticket.created_by_email}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
