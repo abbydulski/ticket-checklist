@@ -7,17 +7,7 @@ import { Plus, LogOut, CheckCircle2, Circle } from 'lucide-react';
 import Image from 'next/image';
 import { getIncompleteTickets, createTicket } from '@/lib/ticketService';
 import { Ticket } from '@/lib/supabase';
-
-const CHECKLIST_STEPS = [
-  { id: 1, title: 'Review Requirements', description: 'Understand the ticket requirements and acceptance criteria' },
-  { id: 2, title: 'Create Branch', description: 'Create a new git branch for this ticket' },
-  { id: 3, title: 'Implement Changes', description: 'Write the code to implement the required changes' },
-  { id: 4, title: 'Write Tests', description: 'Add unit tests for the new functionality' },
-  { id: 5, title: 'Code Review', description: 'Submit PR and get code review approval' },
-  { id: 6, title: 'QA Testing', description: 'Test the changes in QA environment' },
-  { id: 7, title: 'Update Documentation', description: 'Update relevant documentation' },
-  { id: 8, title: 'Deploy', description: 'Deploy to production' },
-];
+import { CHECKLIST_STEPS } from '@/lib/constants';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();

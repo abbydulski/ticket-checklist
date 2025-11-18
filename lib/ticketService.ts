@@ -1,10 +1,5 @@
 import { supabase } from './supabase';
-
-export interface ChecklistStep {
-  id: number;
-  title: string;
-  description: string;
-}
+import { ChecklistStep } from './constants';
 
 // Create a new ticket
 export async function createTicket(
@@ -193,4 +188,3 @@ export async function getIncompleteTickets() {
     return { success: false, error };
   }
 }
-
