@@ -3,16 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { Plus, LogOut, CheckCircle2, Circle } from 'lucide-react';
+import { Plus, LogOut, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { getIncompleteTickets, createTicket } from '@/lib/ticketService';
-import { Ticket } from '@/lib/supabase';
+import { getIncompleteTicketsWithSteps, createTicket, deleteTicket } from '@/lib/ticketService';
+import { Ticket, TicketStep } from '@/lib/supabase';
 import { CHECKLIST_STEPS } from '@/lib/constants';
+
+interface TicketWithSteps extends Ticket {
+  steps?: TicketStep[];
+}
 
 export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<TicketWithSteps[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
   const [newTicketName, setNewTicketName] = useState('');
@@ -32,7 +36,7 @@ export default function DashboardPage() {
 
   const loadTickets = async () => {
     setLoading(true);
-    const result = await getIncompleteTickets();
+    const result = await getIncompleteTicketsWithSteps();
     if (result.success && result.tickets) {
       setTickets(result.tickets);
     }
@@ -53,6 +57,21 @@ export default function DashboardPage() {
       alert('Failed to create ticket');
     }
     setCreating(false);
+  };
+
+  const handleDeleteTicket = async (ticketId: string, ticketName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation to ticket detail
+
+    if (confirm(`Are you sure you want to delete "${ticketName}"? This cannot be undone.`)) {
+      const result = await deleteTicket(ticketId);
+
+      if (result.success) {
+        // Reload tickets after deletion
+        loadTickets();
+      } else {
+        alert('Failed to delete ticket');
+      }
+    }
   };
 
   const handleSignOut = async () => {
@@ -119,29 +138,83 @@ export default function DashboardPage() {
               No incomplete tickets. Create one to get started!
             </div>
           ) : (
-            tickets.map((ticket) => (
-              <div
-                key={ticket.id}
-                onClick={() => router.push(`/ticket/${ticket.id}`)}
-                className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-shadow cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{ticket.ticket_name}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span>Progress: {ticket.completed_steps}/{ticket.total_steps}</span>
-                      <span>•</span>
-                      <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
+            tickets.map((ticket) => {
+              // Calculate section progress
+              const sections = [
+                { name: 'Job Prep', start: 1, end: 5, color: 'bg-blue-600' },
+                { name: 'Field Ops', start: 6, end: 15, color: 'bg-green-600' },
+                { name: 'Office', start: 16, end: 20, color: 'bg-purple-600' },
+              ];
+
+              const getSectionProgress = (start: number, end: number) => {
+                if (!ticket.steps) return { completed: 0, total: end - start + 1 };
+                const sectionSteps = ticket.steps.filter(s => s.step_id >= start && s.step_id <= end);
+                const completed = sectionSteps.filter(s => s.is_completed).length;
+                return { completed, total: sectionSteps.length };
+              };
+
+              return (
+                <div
+                  key={ticket.id}
+                  className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition-shadow relative group"
+                >
+                  <div
+                    onClick={() => router.push(`/ticket/${ticket.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex-1 pr-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{ticket.ticket_name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <span>Progress: {ticket.completed_steps}/{ticket.total_steps}</span>
+                          <span>•</span>
+                          <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-gray-900">
+                          {Math.round((ticket.completed_steps / ticket.total_steps) * 100)}%
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section Progress Bars */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {sections.map((section) => {
+                        const { completed, total } = getSectionProgress(section.start, section.end);
+                        const sectionProgress = (completed / total) * 100;
+
+                        return (
+                          <div key={section.name} className="text-center">
+                            <div className="text-xs font-semibold text-gray-500 mb-1">
+                              {section.name}
+                            </div>
+                            <div className="text-sm font-bold text-gray-900 mb-1">
+                              {completed}/{total}
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className={`${section.color} h-2 rounded-full transition-all duration-300`}
+                                style={{ width: `${sectionProgress}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {Math.round((ticket.completed_steps / ticket.total_steps) * 100)}%
-                    </div>
-                  </div>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => handleDeleteTicket(ticket.id, ticket.ticket_name, e)}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Delete ticket"
+                  >
+                    <Trash2 size={20} />
+                  </button>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

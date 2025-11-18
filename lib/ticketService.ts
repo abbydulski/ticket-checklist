@@ -188,3 +188,71 @@ export async function getIncompleteTickets() {
     return { success: false, error };
   }
 }
+
+// Get incomplete tickets with their steps for dashboard
+export async function getIncompleteTicketsWithSteps() {
+  try {
+    const { data: tickets, error: ticketsError } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('is_complete', false)
+      .order('created_at', { ascending: false });
+
+    if (ticketsError) throw ticketsError;
+
+    // Get steps for all tickets
+    const ticketsWithSteps = await Promise.all(
+      tickets.map(async (ticket) => {
+        const { data: steps, error: stepsError } = await supabase
+          .from('ticket_steps')
+          .select('*')
+          .eq('ticket_id', ticket.id)
+          .order('step_id', { ascending: true });
+
+        if (stepsError) throw stepsError;
+
+        return { ...ticket, steps };
+      })
+    );
+
+    return { success: true, tickets: ticketsWithSteps };
+  } catch (error) {
+    console.error('Error getting incomplete tickets with steps:', error);
+    return { success: false, error };
+  }
+}
+
+// Delete a ticket and all its steps
+export async function deleteTicket(ticketId: string) {
+  try {
+    console.log('Deleting ticket:', ticketId);
+
+    // Delete all steps first (due to foreign key constraint)
+    const { error: stepsError } = await supabase
+      .from('ticket_steps')
+      .delete()
+      .eq('ticket_id', ticketId);
+
+    if (stepsError) {
+      console.error('Error deleting steps:', stepsError);
+      throw stepsError;
+    }
+
+    // Delete the ticket
+    const { error: ticketError } = await supabase
+      .from('tickets')
+      .delete()
+      .eq('id', ticketId);
+
+    if (ticketError) {
+      console.error('Error deleting ticket:', ticketError);
+      throw ticketError;
+    }
+
+    console.log('Ticket deleted successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting ticket:', error);
+    return { success: false, error };
+  }
+}
