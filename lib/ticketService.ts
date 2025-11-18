@@ -9,6 +9,8 @@ export interface ChecklistStep {
 // Create a new ticket
 export async function createTicket(ticketName: string, steps: ChecklistStep[]) {
   try {
+    console.log('Creating ticket:', ticketName);
+
     // Insert ticket
     const { data: ticket, error: ticketError } = await supabase
       .from('tickets')
@@ -21,7 +23,12 @@ export async function createTicket(ticketName: string, steps: ChecklistStep[]) {
       .select()
       .single();
 
-    if (ticketError) throw ticketError;
+    if (ticketError) {
+      console.error('Ticket creation error:', ticketError);
+      throw ticketError;
+    }
+
+    console.log('Ticket created:', ticket);
 
     // Insert all steps
     const ticketSteps = steps.map((step) => ({
@@ -36,8 +43,12 @@ export async function createTicket(ticketName: string, steps: ChecklistStep[]) {
       .from('ticket_steps')
       .insert(ticketSteps);
 
-    if (stepsError) throw stepsError;
+    if (stepsError) {
+      console.error('Steps creation error:', stepsError);
+      throw stepsError;
+    }
 
+    console.log('All steps created successfully');
     return { success: true, ticketId: ticket.id };
   } catch (error) {
     console.error('Error creating ticket:', error);
@@ -52,6 +63,8 @@ export async function updateStepCompletion(
   isCompleted: boolean
 ) {
   try {
+    console.log('Updating step:', { ticketId, stepId, isCompleted });
+
     const { error } = await supabase
       .from('ticket_steps')
       .update({
@@ -61,7 +74,12 @@ export async function updateStepCompletion(
       .eq('ticket_id', ticketId)
       .eq('step_id', stepId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Step update error:', error);
+      throw error;
+    }
+
+    console.log('Step updated successfully');
 
     // Update ticket's completed_steps count
     await updateTicketProgress(ticketId);
