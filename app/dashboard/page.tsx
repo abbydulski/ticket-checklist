@@ -149,11 +149,15 @@ export default function DashboardPage() {
         await loadTickets(); // Reload to show updated assignment
       } else {
         console.error('Reassignment failed:', result.error);
-        alert('Failed to reassign ticket. Error: ' + (result.error?.message || 'Unknown error'));
+        const errorMsg = result.error && typeof result.error === 'object' && 'message' in result.error
+          ? (result.error as any).message
+          : 'Unknown error';
+        alert('Failed to reassign ticket. Error: ' + errorMsg);
       }
     } catch (error) {
       console.error('Exception during reassignment:', error);
-      alert('An error occurred: ' + error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      alert('An error occurred: ' + errorMsg);
     } finally {
       setReassigning(false);
       console.log('=== REASSIGN ENDED ===');
