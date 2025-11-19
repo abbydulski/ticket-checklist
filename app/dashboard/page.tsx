@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [reassignTicketId, setReassignTicketId] = useState<string | null>(null);
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [reassigning, setReassigning] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -37,6 +38,7 @@ export default function DashboardPage() {
       loadTickets();
       loadUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadTickets = async () => {
@@ -49,9 +51,17 @@ export default function DashboardPage() {
   };
 
   const loadUsers = async () => {
-    const result = await getAllUsers();
-    if (result.success && result.users) {
-      setUsers(result.users);
+    try {
+      console.log('Loading users...');
+      const result = await getAllUsers();
+      console.log('Users result:', result);
+      if (result.success && result.users) {
+        setUsers(result.users);
+      } else {
+        console.error('Failed to load users:', result.error);
+      }
+    } catch (error) {
+      console.error('Error in loadUsers:', error);
     }
   };
 
@@ -88,26 +98,65 @@ export default function DashboardPage() {
 
   const handleOpenReassign = (ticketId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation to ticket detail
+    console.log('Opening reassign modal for ticket:', ticketId);
+    console.log('Available users:', users);
     setReassignTicketId(ticketId);
     setSelectedUserId('');
     setShowReassignModal(true);
   };
 
   const handleReassignTicket = async () => {
-    if (!reassignTicketId || !selectedUserId) return;
+    console.log('=== REASSIGN STARTED ===');
+    console.log('Ticket ID:', reassignTicketId);
+    console.log('Selected User ID:', selectedUserId);
+    console.log('Current User:', user);
+    console.log('Available Users:', users);
 
-    const selectedUser = users.find(u => u.id === selectedUserId);
-    if (!selectedUser) return;
+    if (!reassignTicketId || !selectedUserId || !user) {
+      console.error('Missing required data:', { reassignTicketId, selectedUserId, user });
+      return;
+    }
 
-    const result = await reassignTicket(reassignTicketId, selectedUser.id, selectedUser.email);
-
-    if (result.success) {
-      setShowReassignModal(false);
-      setReassignTicketId(null);
-      setSelectedUserId('');
-      loadTickets(); // Reload to show updated assignment
+    // Check if selected user is the current user
+    let selectedUser;
+    if (selectedUserId === user.id) {
+      console.log('Assigning to current user (self)');
+      selectedUser = { id: user.id, email: user.email || '' };
     } else {
-      alert('Failed to reassign ticket');
+      console.log('Assigning to another user');
+      selectedUser = users.find(u => u.id === selectedUserId);
+    }
+
+    if (!selectedUser) {
+      console.error('Selected user not found:', selectedUserId);
+      alert('Selected user not found. Please try again.');
+      return;
+    }
+
+    console.log('Selected user object:', selectedUser);
+    setReassigning(true);
+
+    try {
+      console.log('Calling reassignTicket API...');
+      const result = await reassignTicket(reassignTicketId, selectedUser.id, selectedUser.email);
+      console.log('Reassign result:', result);
+
+      if (result.success) {
+        console.log('Reassignment successful!');
+        setShowReassignModal(false);
+        setReassignTicketId(null);
+        setSelectedUserId('');
+        await loadTickets(); // Reload to show updated assignment
+      } else {
+        console.error('Reassignment failed:', result.error);
+        alert('Failed to reassign ticket. Error: ' + (result.error?.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Exception during reassignment:', error);
+      alert('An error occurred: ' + error);
+    } finally {
+      setReassigning(false);
+      console.log('=== REASSIGN ENDED ===');
     }
   };
 
@@ -357,10 +406,10 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={handleReassignTicket}
-                disabled={!selectedUserId}
+                disabled={!selectedUserId || reassigning}
                 className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
-                Reassign
+                {reassigning ? 'Reassigning...' : 'Reassign'}
               </button>
             </div>
           </div>

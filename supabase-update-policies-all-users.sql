@@ -1,15 +1,24 @@
 -- Update RLS policies to allow all users to see and work on all tickets
 -- Run this in your Supabase SQL Editor
 
--- First, drop existing policies
+-- First, drop existing policies (both old and new names)
 DROP POLICY IF EXISTS "Users can view their own tickets" ON tickets;
 DROP POLICY IF EXISTS "Users can insert their own tickets" ON tickets;
 DROP POLICY IF EXISTS "Users can update their own tickets" ON tickets;
 DROP POLICY IF EXISTS "Users can delete their own tickets" ON tickets;
+DROP POLICY IF EXISTS "All users can view all tickets" ON tickets;
+DROP POLICY IF EXISTS "All users can create tickets" ON tickets;
+DROP POLICY IF EXISTS "All users can update all tickets" ON tickets;
+DROP POLICY IF EXISTS "All users can delete all tickets" ON tickets;
+
 DROP POLICY IF EXISTS "Users can view steps for their tickets" ON ticket_steps;
 DROP POLICY IF EXISTS "Users can insert steps for their tickets" ON ticket_steps;
 DROP POLICY IF EXISTS "Users can update steps for their tickets" ON ticket_steps;
 DROP POLICY IF EXISTS "Users can delete steps for their tickets" ON ticket_steps;
+DROP POLICY IF EXISTS "All users can view all ticket steps" ON ticket_steps;
+DROP POLICY IF EXISTS "All users can insert ticket steps" ON ticket_steps;
+DROP POLICY IF EXISTS "All users can update all ticket steps" ON ticket_steps;
+DROP POLICY IF EXISTS "All users can delete all ticket steps" ON ticket_steps;
 
 -- TICKETS TABLE POLICIES
 
