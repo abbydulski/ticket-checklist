@@ -266,16 +266,14 @@ export default function DashboardPage() {
                       <UserPlus size={20} />
                     </button>
 
-                    {/* Delete Button - only show if user created the ticket */}
-                    {user && ticket.user_id === user.id && (
-                      <button
-                        onClick={(e) => handleDeleteTicket(ticket.id, ticket.ticket_name, e)}
-                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete ticket"
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    )}
+                    {/* Delete Button */}
+                    <button
+                      onClick={(e) => handleDeleteTicket(ticket.id, ticket.ticket_name, e)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete ticket"
+                    >
+                      <Trash2 size={20} />
+                    </button>
                   </div>
                 </div>
               );
@@ -333,7 +331,14 @@ export default function DashboardPage() {
               className="w-full px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 mb-4 text-sm sm:text-base"
             >
               <option value="">Select a user...</option>
-              {users.map((u) => (
+              {/* Current user first */}
+              {user && (
+                <option key={user.id} value={user.id}>
+                  {user.email} (Me)
+                </option>
+              )}
+              {/* Other users */}
+              {users.filter(u => u.id !== user?.id).map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.email}
                 </option>

@@ -25,7 +25,7 @@ This allows all users to see and work on all tickets (not just their own).
 **What this does:**
 - ✅ All users can view ALL tickets
 - ✅ All users can update ALL tickets (for reassignment and progress)
-- ✅ Only creators can delete their own tickets (security)
+- ✅ All users can delete ANY ticket (team collaboration)
 
 ### Step 2: Add Assignment Columns
 
@@ -72,12 +72,13 @@ For password reset to work, you need to configure email settings in Supabase:
 1. Go to the **Dashboard**
 2. Hover over any ticket card
 3. Click the **👤+ (User Plus)** icon
-4. Select a team member from the dropdown
+4. Select a team member from the dropdown (including yourself!)
 5. Click **Reassign**
 6. The ticket will now show "Assigned: user@email.com"
 
 **Notes:**
 - Any user can reassign any ticket
+- You can assign tickets to yourself (shows as "Me" in dropdown)
 - The dropdown shows all users who have created tickets
 - Assigned user is displayed in blue on the ticket card
 
@@ -86,13 +87,14 @@ For password reset to work, you need to configure email settings in Supabase:
 - **Before:** Users only saw their own tickets
 - **After:** All users see ALL tickets on the dashboard
 - Everyone can work on any ticket
-- Only the creator can delete a ticket
+- Everyone can delete any ticket (team collaboration)
 
 ### Deleting Tickets
 
-- The **🗑️ (Trash)** icon only appears if you created the ticket
-- This prevents accidental deletion by other team members
+- The **🗑️ (Trash)** icon appears on all tickets when you hover
+- Any team member can delete any ticket
 - Hover over a ticket to see the delete button
+- Confirmation dialog prevents accidental deletion
 
 ---
 
@@ -119,6 +121,7 @@ After running the SQL scripts, test these features:
 ### Ticket Reassignment
 - [ ] Create a ticket
 - [ ] Hover over ticket and click reassign icon
+- [ ] Verify you can see yourself in dropdown (marked as "Me")
 - [ ] Select a user from dropdown
 - [ ] Verify "Assigned: email" appears on ticket
 - [ ] Have another user log in and verify they can see the ticket
@@ -128,7 +131,7 @@ After running the SQL scripts, test these features:
 - [ ] Log in as User B
 - [ ] Verify User B can see User A's ticket
 - [ ] Verify User B can work on the ticket
-- [ ] Verify User B cannot delete User A's ticket
+- [ ] Verify User B can delete User A's ticket (with confirmation)
 
 ---
 

@@ -5,9 +5,11 @@
 DROP POLICY IF EXISTS "Users can view their own tickets" ON tickets;
 DROP POLICY IF EXISTS "Users can insert their own tickets" ON tickets;
 DROP POLICY IF EXISTS "Users can update their own tickets" ON tickets;
+DROP POLICY IF EXISTS "Users can delete their own tickets" ON tickets;
 DROP POLICY IF EXISTS "Users can view steps for their tickets" ON ticket_steps;
 DROP POLICY IF EXISTS "Users can insert steps for their tickets" ON ticket_steps;
 DROP POLICY IF EXISTS "Users can update steps for their tickets" ON ticket_steps;
+DROP POLICY IF EXISTS "Users can delete steps for their tickets" ON ticket_steps;
 
 -- TICKETS TABLE POLICIES
 
@@ -22,14 +24,14 @@ ON tickets FOR INSERT
 WITH CHECK (auth.role() = 'authenticated');
 
 -- Allow all authenticated users to update ALL tickets (for reassignment and progress)
-CREATE POLICY "All users can update all tickets" 
-ON tickets FOR UPDATE 
+CREATE POLICY "All users can update all tickets"
+ON tickets FOR UPDATE
 USING (auth.role() = 'authenticated');
 
--- Keep DELETE restricted to ticket creators only
--- (This policy should already exist from supabase-delete-policies.sql)
--- If not, uncomment the line below:
--- CREATE POLICY "Users can delete their own tickets" ON tickets FOR DELETE USING (auth.uid() = user_id);
+-- Allow all authenticated users to delete ANY ticket
+CREATE POLICY "All users can delete all tickets"
+ON tickets FOR DELETE
+USING (auth.role() = 'authenticated');
 
 -- TICKET_STEPS TABLE POLICIES
 
@@ -44,19 +46,12 @@ ON ticket_steps FOR INSERT
 WITH CHECK (auth.role() = 'authenticated');
 
 -- Allow all authenticated users to update ALL ticket steps
-CREATE POLICY "All users can update all ticket steps" 
-ON ticket_steps FOR UPDATE 
+CREATE POLICY "All users can update all ticket steps"
+ON ticket_steps FOR UPDATE
 USING (auth.role() = 'authenticated');
 
--- Keep DELETE restricted to ticket creators only
--- (This policy should already exist from supabase-delete-policies.sql)
--- If not, uncomment the lines below:
--- CREATE POLICY "Users can delete steps for their tickets" ON ticket_steps FOR DELETE 
--- USING (
---   EXISTS (
---     SELECT 1 FROM tickets 
---     WHERE tickets.id = ticket_steps.ticket_id 
---     AND tickets.user_id = auth.uid()
---   )
--- );
+-- Allow all authenticated users to delete ANY ticket steps
+CREATE POLICY "All users can delete all ticket steps"
+ON ticket_steps FOR DELETE
+USING (auth.role() = 'authenticated');
 
