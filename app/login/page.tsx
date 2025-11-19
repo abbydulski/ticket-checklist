@@ -7,13 +7,14 @@ import Image from 'next/image';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  
-  const { signIn, signUp } = useAuth();
+
+  const { signIn, signUp, resetPassword } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,7 +23,15 @@ export default function LoginPage() {
     setError('');
     setMessage('');
 
-    if (isLogin) {
+    if (isForgotPassword) {
+      const { error } = await resetPassword(email);
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage('Password reset email sent! Check your inbox.');
+        setEmail('');
+      }
+    } else if (isLogin) {
       const { error } = await signIn(email, password);
       if (error) {
         setError(error.message);
@@ -55,10 +64,13 @@ export default function LoginPage() {
         </div>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
+          {isForgotPassword ? 'Reset Password' : (isLogin ? 'Welcome Back' : 'Create Account')}
         </h1>
         <p className="text-gray-600 mb-6 text-center">
-          {isLogin ? 'Sign in to manage your tickets' : 'Sign up to get started'}
+          {isForgotPassword
+            ? 'Enter your email to receive a password reset link'
+            : (isLogin ? 'Sign in to manage your tickets' : 'Sign up to get started')
+          }
         </p>
 
         {error && (
@@ -89,42 +101,75 @@ export default function LoginPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900"
-              placeholder="••••••••"
-            />
-          </div>
+          {!isForgotPassword && (
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900"
+                placeholder="••••••••"
+              />
+            </div>
+          )}
+
+          {isLogin && !isForgotPassword && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(true);
+                  setIsLogin(false);
+                  setError('');
+                  setMessage('');
+                }}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Sign Up')}
+            {loading ? 'Loading...' : (isForgotPassword ? 'Send Reset Link' : (isLogin ? 'Sign In' : 'Sign Up'))}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-              setMessage('');
-            }}
-            className="text-gray-600 hover:text-gray-900 text-sm"
-          >
-            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-          </button>
+        <div className="mt-6 text-center space-y-2">
+          {isForgotPassword ? (
+            <button
+              onClick={() => {
+                setIsForgotPassword(false);
+                setIsLogin(true);
+                setError('');
+                setMessage('');
+              }}
+              className="text-gray-600 hover:text-gray-900 text-sm"
+            >
+              Back to sign in
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+                setMessage('');
+              }}
+              className="text-gray-600 hover:text-gray-900 text-sm"
+            >
+              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+            </button>
+          )}
         </div>
       </div>
     </div>

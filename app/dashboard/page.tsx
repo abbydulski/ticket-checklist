@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { Plus, LogOut, Trash2 } from 'lucide-react';
+import { Plus, LogOut, Trash2, UserPlus } from 'lucide-react';
 import Image from 'next/image';
-import { getIncompleteTicketsWithSteps, createTicket, deleteTicket } from '@/lib/ticketService';
+import { getIncompleteTicketsWithSteps, createTicket, deleteTicket, reassignTicket, getAllUsers } from '@/lib/ticketService';
 import { Ticket, TicketStep } from '@/lib/supabase';
 import { CHECKLIST_STEPS } from '@/lib/constants';
 
@@ -21,6 +21,10 @@ export default function DashboardPage() {
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
   const [newTicketName, setNewTicketName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [reassignTicketId, setReassignTicketId] = useState<string | null>(null);
+  const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -31,6 +35,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       loadTickets();
+      loadUsers();
     }
   }, [user]);
 
@@ -41,6 +46,13 @@ export default function DashboardPage() {
       setTickets(result.tickets);
     }
     setLoading(false);
+  };
+
+  const loadUsers = async () => {
+    const result = await getAllUsers();
+    if (result.success && result.users) {
+      setUsers(result.users);
+    }
   };
 
   const handleCreateTicket = async () => {
@@ -71,6 +83,31 @@ export default function DashboardPage() {
       } else {
         alert('Failed to delete ticket');
       }
+    }
+  };
+
+  const handleOpenReassign = (ticketId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation to ticket detail
+    setReassignTicketId(ticketId);
+    setSelectedUserId('');
+    setShowReassignModal(true);
+  };
+
+  const handleReassignTicket = async () => {
+    if (!reassignTicketId || !selectedUserId) return;
+
+    const selectedUser = users.find(u => u.id === selectedUserId);
+    if (!selectedUser) return;
+
+    const result = await reassignTicket(reassignTicketId, selectedUser.id, selectedUser.email);
+
+    if (result.success) {
+      setShowReassignModal(false);
+      setReassignTicketId(null);
+      setSelectedUserId('');
+      loadTickets(); // Reload to show updated assignment
+    } else {
+      alert('Failed to reassign ticket');
     }
   };
 
@@ -175,6 +212,14 @@ export default function DashboardPage() {
                               <span className="truncate max-w-[150px] sm:max-w-none">By: {ticket.created_by_email}</span>
                             </>
                           )}
+                          {ticket.assigned_to_email && (
+                            <>
+                              <span className="hidden sm:inline">•</span>
+                              <span className="truncate max-w-[150px] sm:max-w-none text-blue-600 font-medium">
+                                Assigned: {ticket.assigned_to_email}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="text-left sm:text-right">
@@ -210,14 +255,28 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Delete Button */}
-                  <button
-                    onClick={(e) => handleDeleteTicket(ticket.id, ticket.ticket_name, e)}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                    title="Delete ticket"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Reassign Button */}
+                    <button
+                      onClick={(e) => handleOpenReassign(ticket.id, e)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Reassign ticket"
+                    >
+                      <UserPlus size={20} />
+                    </button>
+
+                    {/* Delete Button - only show if user created the ticket */}
+                    {user && ticket.user_id === user.id && (
+                      <button
+                        onClick={(e) => handleDeleteTicket(ticket.id, ticket.ticket_name, e)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete ticket"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })
@@ -254,6 +313,49 @@ export default function DashboardPage() {
                 className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
                 {creating ? 'Creating...' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reassign Ticket Modal */}
+      {showReassignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Reassign Ticket</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Select a team member to assign this ticket to:
+            </p>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              className="w-full px-4 py-2.5 sm:py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 mb-4 text-sm sm:text-base"
+            >
+              <option value="">Select a user...</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.email}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2 sm:gap-3">
+              <button
+                onClick={() => {
+                  setShowReassignModal(false);
+                  setReassignTicketId(null);
+                  setSelectedUserId('');
+                }}
+                className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm sm:text-base"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReassignTicket}
+                disabled={!selectedUserId}
+                className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+              >
+                Reassign
               </button>
             </div>
           </div>

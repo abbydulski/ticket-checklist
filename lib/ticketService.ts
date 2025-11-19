@@ -256,3 +256,61 @@ export async function deleteTicket(ticketId: string) {
     return { success: false, error };
   }
 }
+
+// Reassign a ticket to another user
+export async function reassignTicket(ticketId: string, userId: string, userEmail: string) {
+  try {
+    console.log('Reassigning ticket:', { ticketId, userId, userEmail });
+
+    const { error } = await supabase
+      .from('tickets')
+      .update({
+        assigned_to_user_id: userId,
+        assigned_to_email: userEmail,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', ticketId);
+
+    if (error) {
+      console.error('Error reassigning ticket:', error);
+      throw error;
+    }
+
+    console.log('Ticket reassigned successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error reassigning ticket:', error);
+    return { success: false, error };
+  }
+}
+
+// Get all users (for reassignment dropdown)
+export async function getAllUsers() {
+  try {
+    // Get all unique user emails from tickets
+    const { data: tickets, error } = await supabase
+      .from('tickets')
+      .select('created_by_email, user_id')
+      .not('created_by_email', 'is', null);
+
+    if (error) throw error;
+
+    // Create a unique list of users
+    const usersMap = new Map();
+    tickets.forEach(ticket => {
+      if (ticket.created_by_email && ticket.user_id) {
+        usersMap.set(ticket.user_id, ticket.created_by_email);
+      }
+    });
+
+    const users = Array.from(usersMap.entries()).map(([id, email]) => ({
+      id,
+      email,
+    }));
+
+    return { success: true, users };
+  } catch (error) {
+    console.error('Error getting users:', error);
+    return { success: false, error, users: [] };
+  }
+}

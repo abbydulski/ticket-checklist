@@ -17,6 +17,8 @@ export interface Ticket {
   completed_steps: number;
   user_id: string | null;
   created_by_email: string | null;
+  assigned_to_user_id: string | null;
+  assigned_to_email: string | null;
 }
 
 export interface TicketStep {
