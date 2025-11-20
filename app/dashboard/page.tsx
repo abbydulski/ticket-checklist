@@ -259,20 +259,10 @@ export default function DashboardPage() {
                           <span>Progress: {ticket.completed_steps}/{ticket.total_steps}</span>
                           <span className="hidden sm:inline">•</span>
                           <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
-                          {ticket.created_by_email && (
-                            <>
-                              <span className="hidden sm:inline">•</span>
-                              <span className="truncate max-w-[150px] sm:max-w-none">By: {ticket.created_by_email}</span>
-                            </>
-                          )}
-                          {ticket.assigned_to_email && (
-                            <>
-                              <span className="hidden sm:inline">•</span>
-                              <span className="truncate max-w-[150px] sm:max-w-none text-blue-600 font-medium">
-                                Assigned: {ticket.assigned_to_email}
-                              </span>
-                            </>
-                          )}
+                          <span className="hidden sm:inline">•</span>
+                          <span className="truncate max-w-[150px] sm:max-w-none text-blue-600 font-medium">
+                            Owner: {ticket.assigned_to_email || ticket.created_by_email || 'Unassigned'}
+                          </span>
                         </div>
                       </div>
                       <div className="text-left sm:text-right">
@@ -314,7 +304,7 @@ export default function DashboardPage() {
                     <button
                       onClick={(e) => handleOpenReassign(ticket.id, e)}
                       className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Reassign ticket"
+                      title="Change owner"
                     >
                       <UserPlus size={20} />
                     </button>
@@ -374,9 +364,9 @@ export default function DashboardPage() {
       {showReassignModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Reassign Ticket</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Change Owner</h2>
             <p className="text-sm text-gray-600 mb-4">
-              Select a team member to assign this ticket to:
+              Select who should own this ticket:
             </p>
             <select
               value={selectedUserId}
@@ -413,7 +403,7 @@ export default function DashboardPage() {
                 disabled={!selectedUserId || reassigning}
                 className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-black disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               >
-                {reassigning ? 'Reassigning...' : 'Reassign'}
+                {reassigning ? 'Updating...' : 'Change Owner'}
               </button>
             </div>
           </div>
