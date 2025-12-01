@@ -287,28 +287,44 @@ export async function reassignTicket(ticketId: string, userId: string, userEmail
 // Get all users (for reassignment dropdown)
 export async function getAllUsers() {
   try {
-    // Get all unique user emails from tickets
-    const { data: tickets, error } = await supabase
-      .from('tickets')
-      .select('created_by_email, user_id')
-      .not('created_by_email', 'is', null);
+    // Try to use RPC function to get all users from auth.users
+    const { data: users, error } = await supabase
+      .rpc('get_all_users');
 
-    if (error) throw error;
+    if (error) {
+      console.warn('RPC get_all_users failed, falling back to ticket-based users:', error);
 
-    // Create a unique list of users
-    const usersMap = new Map();
-    tickets.forEach(ticket => {
-      if (ticket.created_by_email && ticket.user_id) {
-        usersMap.set(ticket.user_id, ticket.created_by_email);
-      }
-    });
+      // Fallback: Get unique users from tickets
+      const { data: tickets, error: ticketsError } = await supabase
+        .from('tickets')
+        .select('created_by_email, user_id, assigned_to_email, assigned_to_user_id')
+        .or('created_by_email.not.is.null,assigned_to_email.not.is.null');
 
-    const users = Array.from(usersMap.entries()).map(([id, email]) => ({
-      id,
-      email,
-    }));
+      if (ticketsError) throw ticketsError;
 
-    return { success: true, users };
+      // Create a unique list of users from both creators and assignees
+      const usersMap = new Map();
+
+      tickets?.forEach(ticket => {
+        // Add creator
+        if (ticket.created_by_email && ticket.user_id) {
+          usersMap.set(ticket.user_id, ticket.created_by_email);
+        }
+        // Add assignee
+        if (ticket.assigned_to_email && ticket.assigned_to_user_id) {
+          usersMap.set(ticket.assigned_to_user_id, ticket.assigned_to_email);
+        }
+      });
+
+      const fallbackUsers = Array.from(usersMap.entries()).map(([id, email]) => ({
+        id,
+        email,
+      }));
+
+      return { success: true, users: fallbackUsers };
+    }
+
+    return { success: true, users: users || [] };
   } catch (error) {
     console.error('Error getting users:', error);
     return { success: false, error, users: [] };
