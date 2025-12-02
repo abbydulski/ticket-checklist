@@ -8,6 +8,38 @@ import Image from 'next/image';
 import { getTicket, updateStepCompletion } from '@/lib/ticketService';
 import { Ticket, TicketStep } from '@/lib/supabase';
 
+// Simple markdown parser for links and bullets
+function parseMarkdown(text: string): string {
+  if (!text) return '';
+
+  let html = text;
+
+  // Parse markdown links: [text](url) -> <a href="url">text</a>
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline font-medium">$1</a>');
+
+  // Parse bullet points: lines starting with - or * or •
+  const lines = html.split('\n');
+  const processedLines = lines.map(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
+      return '<li class="ml-4">' + trimmed.substring(2) + '</li>';
+    }
+    return line;
+  });
+
+  html = processedLines.join('\n');
+
+  // Wrap consecutive <li> items in <ul>
+  html = html.replace(/(<li class="ml-4">.*?<\/li>\n?)+/g, (match) => {
+    return '<ul class="list-disc list-inside space-y-1 my-2">' + match + '</ul>';
+  });
+
+  // Convert line breaks to <br> (except those already in lists)
+  html = html.replace(/\n(?!<\/li>|<li|<ul|<\/ul)/g, '<br>');
+
+  return html;
+}
+
 export default function TicketDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -223,9 +255,10 @@ export default function TicketDetailPage() {
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2 sm:mb-3">
             {steps[currentStep].step_title}
           </h2>
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-            {steps[currentStep].step_description}
-          </p>
+          <div
+            className="text-gray-600 text-sm sm:text-base md:text-lg prose prose-sm sm:prose-base max-w-none"
+            dangerouslySetInnerHTML={{ __html: parseMarkdown(steps[currentStep].step_description || '') }}
+          />
         </div>
 
         {/* Checkbox Confirmation */}
