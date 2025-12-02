@@ -17,12 +17,21 @@ function parseMarkdown(text: string): string {
   // Parse markdown links: [text](url) -> <a href="url">text</a>
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline font-medium">$1</a>');
 
-  // Parse bullet points: lines starting with - or * or •
+  // Parse bullet points with nesting support
   const lines = html.split('\n');
   const processedLines = lines.map(line => {
     const trimmed = line.trim();
+
+    // Check for nested bullets (2+ spaces or tab before bullet)
+    const isNested = line.match(/^(\s{2,}|\t)[-*•]\s/);
+
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
-      return '<li class="ml-4">' + trimmed.substring(2) + '</li>';
+      const content = trimmed.substring(2);
+      if (isNested) {
+        return '<li class="ml-8">' + content + '</li>'; // Nested bullet (more indent)
+      } else {
+        return '<li class="ml-4">' + content + '</li>'; // Top-level bullet
+      }
     }
     return line;
   });
@@ -30,7 +39,7 @@ function parseMarkdown(text: string): string {
   html = processedLines.join('\n');
 
   // Wrap consecutive <li> items in <ul>
-  html = html.replace(/(<li class="ml-4">.*?<\/li>\n?)+/g, (match) => {
+  html = html.replace(/(<li class="ml-[48]">.*?<\/li>\n?)+/g, (match) => {
     return '<ul class="list-disc list-inside space-y-1 my-2">' + match + '</ul>';
   });
 
