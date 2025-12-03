@@ -3,6 +3,8 @@ import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js';
 import { CHECKLIST_STEPS } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     // Check if required environment variables are configured
