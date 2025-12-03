@@ -3,6 +3,11 @@ import { google } from 'googleapis';
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if Google OAuth is configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) {
+      return NextResponse.json({ error: 'Google OAuth not configured' }, { status: 500 });
+    }
+
     // Get user ID from query parameter
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('user_id');

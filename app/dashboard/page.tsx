@@ -13,6 +13,9 @@ interface TicketWithSteps extends Ticket {
   steps?: TicketStep[];
 }
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();

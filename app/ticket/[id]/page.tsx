@@ -8,6 +8,9 @@ import Image from 'next/image';
 import { getTicket, updateStepCompletion } from '@/lib/ticketService';
 import { Ticket, TicketStep } from '@/lib/supabase';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Simple markdown parser for links and bullets
 function parseMarkdown(text: string): string {
   if (!text) return '';

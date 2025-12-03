@@ -5,6 +5,21 @@ import { CHECKLIST_STEPS } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if required environment variables are configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      return NextResponse.json(
+        { error: 'Google OAuth not configured' },
+        { status: 500 }
+      );
+    }
+
     const { userId, userEmail } = await request.json();
 
     if (!userId) {
@@ -16,8 +31,8 @@ export async function POST(request: NextRequest) {
 
     // Create server-side Supabase client with service role key (bypasses RLS)
     const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
       {
         auth: {
           autoRefreshToken: false,
