@@ -378,32 +378,36 @@ export default function DashboardPage() {
             <div className="bg-white rounded-xl p-8 text-center text-gray-600">
               Loading tickets...
             </div>
-          ) : (() => {
-            // Filter tickets based on active tab
-            let displayTickets: TicketWithSteps[] = [];
+          ) : (
+            (() => {
+              // Filter tickets based on active tab
+              let displayTickets: TicketWithSteps[] = [];
 
-            if (activeTab === 'my') {
-              // Show only tickets assigned to current user or created by current user
-              displayTickets = tickets.filter(ticket =>
-                ticket.user_id === user?.id ||
-                ticket.assigned_to_user_id === user?.id
-              );
-            } else if (activeTab === 'all') {
-              // Show all incomplete tickets
-              displayTickets = tickets;
-            } else if (activeTab === 'completed') {
-              // Show completed tickets
-              displayTickets = completedTickets;
-            }
+              if (activeTab === 'my') {
+                // Show only tickets assigned to current user or created by current user
+                displayTickets = tickets.filter(ticket =>
+                  ticket.user_id === user?.id ||
+                  ticket.assigned_to_user_id === user?.id
+                );
+              } else if (activeTab === 'all') {
+                // Show all incomplete tickets
+                displayTickets = tickets;
+              } else if (activeTab === 'completed') {
+                // Show completed tickets
+                displayTickets = completedTickets;
+              }
 
-            return displayTickets.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center text-gray-600">
-                {activeTab === 'my' && 'No tickets assigned to you. Create one to get started!'}
-                {activeTab === 'all' && 'No incomplete tickets. Create one to get started!'}
-                {activeTab === 'completed' && 'No completed tickets yet.'}
-              </div>
-            ) : (
-              displayTickets.map((ticket) => {
+              if (displayTickets.length === 0) {
+                return (
+                  <div className="bg-white rounded-xl p-8 text-center text-gray-600">
+                    {activeTab === 'my' && 'No tickets assigned to you. Create one to get started!'}
+                    {activeTab === 'all' && 'No incomplete tickets. Create one to get started!'}
+                    {activeTab === 'completed' && 'No completed tickets yet.'}
+                  </div>
+                );
+              }
+
+              return displayTickets.map((ticket) => {
               // Calculate section progress
               const sections = [
                 { name: 'Job Prep', start: 1, end: 5 },
@@ -522,9 +526,9 @@ export default function DashboardPage() {
                   </div>
                 </div>
               );
-            })
-          );
-          })()}
+            });
+            })()
+          )}
         </div>
       </div>
 
