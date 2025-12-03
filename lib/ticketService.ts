@@ -222,6 +222,39 @@ export async function getIncompleteTicketsWithSteps() {
   }
 }
 
+// Get completed tickets with their steps for archive view
+export async function getCompletedTicketsWithSteps() {
+  try {
+    const { data: tickets, error: ticketsError } = await supabase
+      .from('tickets')
+      .select('*')
+      .eq('is_complete', true)
+      .order('completed_at', { ascending: false });
+
+    if (ticketsError) throw ticketsError;
+
+    // Get steps for all tickets
+    const ticketsWithSteps = await Promise.all(
+      tickets.map(async (ticket) => {
+        const { data: steps, error: stepsError } = await supabase
+          .from('ticket_steps')
+          .select('*')
+          .eq('ticket_id', ticket.id)
+          .order('step_id', { ascending: true });
+
+        if (stepsError) throw stepsError;
+
+        return { ...ticket, steps };
+      })
+    );
+
+    return { success: true, tickets: ticketsWithSteps };
+  } catch (error) {
+    console.error('Error getting completed tickets with steps:', error);
+    return { success: false, error };
+  }
+}
+
 // Delete a ticket and all its steps
 export async function deleteTicket(ticketId: string) {
   try {

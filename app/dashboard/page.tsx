@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
-import { Plus, LogOut, Trash2, UserPlus } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Plus, LogOut, Trash2, UserPlus, Calendar, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
-import { getIncompleteTicketsWithSteps, createTicket, deleteTicket, reassignTicket, getAllUsers } from '@/lib/ticketService';
+import { getIncompleteTicketsWithSteps, getCompletedTicketsWithSteps, createTicket, deleteTicket, reassignTicket, getAllUsers } from '@/lib/ticketService';
 import { Ticket, TicketStep } from '@/lib/supabase';
 import { CHECKLIST_STEPS } from '@/lib/constants';
 
@@ -16,7 +16,9 @@ interface TicketWithSteps extends Ticket {
 export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [tickets, setTickets] = useState<TicketWithSteps[]>([]);
+  const [completedTickets, setCompletedTickets] = useState<TicketWithSteps[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
   const [newTicketName, setNewTicketName] = useState('');
@@ -26,6 +28,9 @@ export default function DashboardPage() {
   const [users, setUsers] = useState<{ id: string; email: string }[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [reassigning, setReassigning] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'my' | 'all' | 'completed'>('my');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -36,10 +41,21 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       loadTickets();
+      loadCompletedTickets();
       loadUsers();
+      checkGoogleConnection();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    // Check for Google connection success
+    const googleConnectedParam = searchParams?.get('google_connected');
+    if (googleConnectedParam === 'true') {
+      setGoogleConnected(true);
+      alert('Google Calendar connected successfully! You can now sync your calendar events.');
+    }
+  }, [searchParams]);
 
   const loadTickets = async () => {
     setLoading(true);
@@ -48,6 +64,13 @@ export default function DashboardPage() {
       setTickets(result.tickets);
     }
     setLoading(false);
+  };
+
+  const loadCompletedTickets = async () => {
+    const result = await getCompletedTicketsWithSteps();
+    if (result.success && result.tickets) {
+      setCompletedTickets(result.tickets);
+    }
   };
 
   const loadUsers = async () => {
@@ -63,6 +86,60 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error in loadUsers:', error);
     }
+  };
+
+  const checkGoogleConnection = async () => {
+    if (!user) return;
+
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase
+        .from('user_google_tokens')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!error && data) {
+        setGoogleConnected(true);
+      }
+    } catch (error) {
+      console.error('Error checking Google connection:', error);
+    }
+  };
+
+  const handleConnectGoogle = () => {
+    if (!user) return;
+    window.location.href = `/api/auth/google/connect?user_id=${user.id}`;
+  };
+
+  const handleSyncCalendar = async () => {
+    if (!user) return;
+
+    setSyncing(true);
+    try {
+      const response = await fetch('/api/calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          userEmail: user.email,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(result.message);
+        await loadTickets(); // Reload tickets to show new ones
+        setActiveTab('my'); // Switch to "My Tickets" tab
+      } else {
+        alert(`Sync failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error syncing calendar:', error);
+      alert('Failed to sync calendar');
+    }
+    setSyncing(false);
   };
 
   const handleCreateTicket = async () => {
@@ -89,7 +166,8 @@ export default function DashboardPage() {
 
       if (result.success) {
         // Reload tickets after deletion
-        loadTickets();
+        await loadTickets();
+        await loadCompletedTickets();
       } else {
         alert('Failed to delete ticket');
       }
@@ -209,26 +287,123 @@ export default function DashboardPage() {
         {/* Create New Ticket Button */}
         <button
           onClick={() => setShowNewTicketModal(true)}
-          className="w-full bg-gray-900 text-white py-4 rounded-xl font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 mb-6"
+          className="w-full bg-gray-900 text-white py-4 rounded-xl font-semibold hover:bg-black transition-colors flex items-center justify-center gap-2 mb-4"
         >
           <Plus size={24} />
           Create New Ticket
         </button>
 
+        {/* Google Calendar Integration */}
+        <div className="bg-white rounded-xl p-4 sm:p-6 mb-6 shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="text-blue-600" size={24} />
+              <div>
+                <h3 className="font-semibold text-gray-900">Google Calendar Sync</h3>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  {googleConnected
+                    ? 'Connected - Events starting with "PROJ-" will sync'
+                    : 'Connect to auto-create tickets from calendar events'}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {!googleConnected ? (
+                <button
+                  onClick={handleConnectGoogle}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm sm:text-base"
+                >
+                  <Calendar size={18} />
+                  Connect Calendar
+                </button>
+              ) : (
+                <button
+                  onClick={handleSyncCalendar}
+                  disabled={syncing}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm sm:text-base"
+                >
+                  <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+                  {syncing ? 'Syncing...' : 'Sync Calendar'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-xl p-2 mb-4 shadow-lg">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('my')}
+              className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'my'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              My Tickets
+            </button>
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'all'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All Tickets
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ${
+                activeTab === 'completed'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Completed
+            </button>
+          </div>
+        </div>
+
         {/* Tickets List */}
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-gray-900">Incomplete Tickets</h2>
-          
+          <h2 className="text-xl font-bold text-gray-900">
+            {activeTab === 'my' && 'My Tickets'}
+            {activeTab === 'all' && 'All Tickets'}
+            {activeTab === 'completed' && 'Completed Tickets'}
+          </h2>
+
           {loading ? (
             <div className="bg-white rounded-xl p-8 text-center text-gray-600">
               Loading tickets...
             </div>
-          ) : tickets.length === 0 ? (
-            <div className="bg-white rounded-xl p-8 text-center text-gray-600">
-              No incomplete tickets. Create one to get started!
-            </div>
-          ) : (
-            tickets.map((ticket) => {
+          ) : (() => {
+            // Filter tickets based on active tab
+            let displayTickets: TicketWithSteps[] = [];
+
+            if (activeTab === 'my') {
+              // Show only tickets assigned to current user or created by current user
+              displayTickets = tickets.filter(ticket =>
+                ticket.user_id === user?.id ||
+                ticket.assigned_to_user_id === user?.id
+              );
+            } else if (activeTab === 'all') {
+              // Show all incomplete tickets
+              displayTickets = tickets;
+            } else if (activeTab === 'completed') {
+              // Show completed tickets
+              displayTickets = completedTickets;
+            }
+
+            return displayTickets.length === 0 ? (
+              <div className="bg-white rounded-xl p-8 text-center text-gray-600">
+                {activeTab === 'my' && 'No tickets assigned to you. Create one to get started!'}
+                {activeTab === 'all' && 'No incomplete tickets. Create one to get started!'}
+                {activeTab === 'completed' && 'No completed tickets yet.'}
+              </div>
+            ) : (
+              displayTickets.map((ticket) => {
               // Calculate section progress
               const sections = [
                 { name: 'Job Prep', start: 1, end: 5 },
@@ -254,7 +429,14 @@ export default function DashboardPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                       <div className="flex-1">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{ticket.ticket_name}</h3>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900">{ticket.ticket_name}</h3>
+                          {ticket.auto_created && (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                              📅 Auto
+                            </span>
+                          )}
+                        </div>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                           <span>Progress: {ticket.completed_steps}/{ticket.total_steps}</span>
                           <span className="hidden sm:inline">•</span>
@@ -264,6 +446,26 @@ export default function DashboardPage() {
                             Owner: {ticket.assigned_to_email || ticket.created_by_email || 'Unassigned'}
                           </span>
                         </div>
+                        {ticket.calendar_event_start && (
+                          <div className="mt-2 flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                            <Calendar size={14} className="text-blue-600" />
+                            <span>
+                              {new Date(ticket.calendar_event_start).toLocaleDateString()} at{' '}
+                              {new Date(ticket.calendar_event_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {ticket.calendar_event_link && (
+                              <a
+                                href={ticket.calendar_event_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-blue-600 hover:text-blue-800 underline"
+                              >
+                                Open in Calendar
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="text-left sm:text-right">
                         <div className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -320,8 +522,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
       </div>
 

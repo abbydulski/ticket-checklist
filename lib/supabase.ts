@@ -19,6 +19,11 @@ export interface Ticket {
   created_by_email: string | null;
   assigned_to_user_id: string | null;
   assigned_to_email: string | null;
+  calendar_event_id: string | null;
+  calendar_event_summary: string | null;
+  calendar_event_start: string | null;
+  calendar_event_link: string | null;
+  auto_created: boolean | null;
 }
 
 export interface TicketStep {
